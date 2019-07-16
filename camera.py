@@ -4,6 +4,7 @@ sys.path.insert(0, 'python-rtsp-client')
 wsdl = 'python-onvif-zeep/wsdl'
 
 from client import *
+#Use https://github.com/lucaszanella/python-rtsp-client version, other one has bug
 from rtsp import RTSPClient
 #import socks
 import time
@@ -39,12 +40,20 @@ class Camera():
             }
 
             self.socks_transport = CustomTransport(timeout=10, proxies=proxies)
+        self.camera = ONVIFCamera(self.ip, 
+                            self.onvif,
+                            self.username, 
+                            self.password,
+                            wsdl, 
+                            transport=self.socks_transport
+                            )
         
     def log(self, info):
         socks_info = ''
         if self.socks_transport: socks_info = ', socks://' + self.socks_host + ":" + str(self.socks_port)
         print('Camera ' + self.name + ', id: ' + str(self.id) + ', ' + self.ip + ':' + self.onvif + socks_info + ": " + str(info))
 
+#Just to see things
     def probe_information(self):
         self.log('loading information...')
         
@@ -131,7 +140,9 @@ class Camera():
             #The true is for remote dns resolution
             sock.set_proxy(socks.SOCKS5, self.socks_host, self.socks_port, True, self.socks_user, self.socks_password) # (socks.SOCKS5, "localhost", 1234)
 
-        myrtsp = RTSPClient(url=uri, callback=callback, socks=sock, choose_transport=self.choose_transport)#, timeout=RTSP_timeout)
+        myrtsp = RTSPClient(url=uri, callback=callback, socks=None)#, timeout=RTSP_timeout)
+        return myrtsp
+'''
         try:
             myrtsp.do_describe()
             while myrtsp.state != 'describe':
@@ -146,6 +157,4 @@ class Camera():
             print(e)
             myrtsp.do_teardown()
         #return camera
-
-    def begin_stream(self):
-        pass
+'''
