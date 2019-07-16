@@ -38,28 +38,32 @@ for cam in cams:
     watchdog = rx.subject.Subject()
     
     #buffer_end = rx.(lambda observer, disposable: observer.on_next(None)).pipe(
-    buffer_end = rx.concat(watchdog, rx.of()).pipe(
-        #ops.flat_map(),
+    buffer_signal = rx.create(lambda observable, d: watchdog.subscribe(observable)).pipe(
         ops.filter(lambda x: x==Camera.COMPLETE_BUFFER)
     )
 
-    interval = rx.concat(watchdog, rx.of()).pipe(
-        ops.buffer_when(lambda: buffer_end)
+    stream = rx.create(lambda observable, d: watchdog.subscribe(observable)).pipe(
+        ops.buffer_when(lambda: buffer_signal)
     )
 
-
-    interval.subscribe(
+    stream.subscribe(
         on_next = lambda i: print(i),
         on_error = lambda e: print("Error Occurred: {0}".format(e)),
         on_completed = lambda: print("--- end of source ---"),
     )
 
-    buffer_end.subscribe(
-        on_next = lambda i: print('2' + i),
+    buffer_signal.subscribe(
+        on_next = lambda i: print('//' + i),
         on_error = lambda e: print("Error Occurred: {0}".format(e)),
         on_completed = lambda: print("--- end of source ---"),
     )
 
+    watchdog.on_next(Camera.ONVIF_HEALTHY)
+    watchdog.on_next(Camera.RTSP_UNHEALTHY)
+    watchdog.on_next(Camera.COMPLETE_BUFFER)
+    watchdog.on_next(Camera.ONVIF_HEALTHY)
+    watchdog.on_next(Camera.RTSP_UNHEALTHY)
+    watchdog.on_next(Camera.COMPLETE_BUFFER)
     watchdog.on_next(Camera.ONVIF_HEALTHY)
     watchdog.on_next(Camera.RTSP_UNHEALTHY)
     watchdog.on_next(Camera.COMPLETE_BUFFER)
