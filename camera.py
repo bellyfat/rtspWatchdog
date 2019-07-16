@@ -16,6 +16,13 @@ class Profile(object):
     pass
 
 class Camera():
+    ONVIF_HEALTHY = 'ONVIF OK'
+    ONVIF_UNHEALTHY = 'ONVIF ERROR'
+    RTSP_HEALTHY = 'RTSP OK'
+    RTSP_UNHEALTHY = 'RTSP ERROR'
+    RTSP_CONNECTING = 'RTSP CONNECTING'
+    ONVIF_CONNECTING = 'ONVIF CONNECTING'
+    COMPLETE_BUFFER = 'COMPLETE_BUFFER'
     def __init__(self, id=None, name=None, ip=None, onvif=None, rtsp=None, username=None, password=None, socks=None):
         self.id = id
         self.name = name or ''
@@ -48,7 +55,31 @@ class Camera():
                             wsdl, 
                             transport=self.socks_transport
                             )
-        
+    def watchdog(self, observer, disposable):
+        #print("watchdog invoked")
+        #TODO: add a try here and if fail pass observer error
+        observer.on_next(self.ONVIF_CONNECTING)
+        self.probe_information()
+        observer.on_next(self.ONVIF_HEALTHY)
+        uri = self.profiles[0].rtsp_uri
+        observer.on_next(self.RTSP_CONNECTING)
+        rtsp = self.rtsp_connect(uri)
+        rtsp.do_describe()
+        i = 0
+        #print("watchdog whle begin")
+
+        while rtsp.state != 'describe':
+            time.sleep(0.1)
+            i+=1
+            if i==5*10:
+                break
+        if rtsp.state != 'describe':
+            observer.on_next(self.RTSP_UNHEALTHY)
+        else:
+            observer.on_next(self.RTSP_HEALTHY)
+        observer.on_next(self.COMPLETE_BUFFER)
+        #print("COMPLETE_BUFFER emitted")
+
     def log(self, info):
         socks_info = ''
         if self.socks_transport: socks_info = ', socks://' + self.socks_host + ":" + str(self.socks_port)
@@ -56,7 +87,7 @@ class Camera():
 
 #Just to see things
     def probe_information(self):
-        self.log('loading information...')
+        #self.log('loading information...')
         
         mycam = ONVIFCamera(self.ip, 
                             self.onvif,
@@ -131,7 +162,7 @@ class Camera():
             return uri.replace('rtsp://', 'rtsp://' + self.username + ":" + self.password + '@')
 
     def rtsp_connect(self, uri):
-        self.log('rtsp connection to uri ' + uri)
+        #self.log('rtsp connection to uri ' + uri)
         RTSP_timeout = 10
         uri = self.rtsp_uri_ensure_username(uri)
         #uri = self.rtsp_uri#.replace('554\/11', '10554')
