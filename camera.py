@@ -1,9 +1,11 @@
 import sys
-sys.path.insert(0, 'python-onvif-zeep/onvif')
-sys.path.insert(0, 'python-rtsp-client')
-wsdl = 'python-onvif-zeep/wsdl'
+import os
+script_directory = os.path.dirname(os.path.realpath(__file__))
+#sys.path.insert(0, script_directory + '/python-onvif-zeep/onvif')
+sys.path.insert(0, script_directory + '/python-rtsp-client')
+wsdl = script_directory + '/python-onvif-zeep/wsdl'
 
-from client import *
+from onvif import ONVIFCamera
 #Use https://github.com/lucaszanella/python-rtsp-client version, other one has bug
 from rtsp import RTSPClient
 #import socks

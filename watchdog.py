@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 #Lucas Zanella
+#Reboots an ONVIF/RTSP camera if RTSP is down. VStarcam cameras suffer from this problem.
 
 import rx
 from rx import operators as ops
 import time
-
-#https://github.com/runtheops/rtsp-rtp/
-#from rtspclient import RTSPClient
 
 import signal,sys,time
 def signal_handling(signum,frame):           
@@ -16,15 +14,21 @@ signal.signal(signal.SIGINT,signal_handling)
 
 QUERY_INTERVAL = 12
 
-from cameras import cams
+import datetime
+print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ' ----------- rtspWatchdog started')
+
+from cameras import cams, Camera
 
 for cam in cams:
     def process_camera_condition(condition):
         if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_HEALTHY in condition:
-            cam.log("REBOOT CAMERA THROUGH ONVIF NOW")
-            cam.devicemgmt.SystemReboot()
+            cam.log("REBOOTING CAMERA THROUGH ONVIF NOW")
+            cam.camera.create_devicemgmt_service()
+            cam.camera.devicemgmt.SystemReboot()
         if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
-            cam.log("VERY ABNORMAL SITUATION, LOG NOW")
+            cam.log("Both ONVIF and RTSP are down!")
+        if cam.RTSP_HEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
+            cam.log("Very strange, RTSP is ok but not ONVIF")
 
     watchdog = rx.subject.Subject()
     
@@ -58,57 +62,7 @@ for cam in cams:
         on_error = lambda e: print("Error Occurred in repeater: {0}".format(e)),
         on_completed = lambda: print("--- end of repeater ---"),
     )
-'''
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
-'''
 
 
 while True:
     pass
-
-'''
-    #interval = rx.create(lambda observer, disposable: observer.on_next(None)).pipe(
-    interval = rx.interval(QUERY_INTERVAL).pipe(
-        ops.flat_map(watchdog),
-        #ops.scan(list_accumulator, []),
-        #ops.buffer_when(lambda: buffer_end)
-        #ops.buffer_when(lambda x: Camera.COMPLETE_BUFFER in x)
-    )
-'''
-
-'''
-def cameraObservable(observer):
-
-
-cam = cams[0]
-source = rx.of(cam).pipe(
-ops.do_action(lambda x: x.probe_information()),
-ops.do_action(lambda cam: cam.rtsp_connect(cam.profiles[0].rtsp_uri)),
-ops.do_action(lambda cam
-)
-
-source.subscribe(
-    on_next = lambda i: print(i),
-    on_error = lambda e: print("Error Occurred: {0}".format(e)),
-    on_completed = lambda: print("--- end of source ---"),
-)
-'''
-'''
-for cam in cams:
-    cam.probe_information()
-    uri = cam.profiles[0].rtsp_uri
-    rtsp = cam.rtsp_connect(uri)
-    rtsp.do_describe()
-    while rtsp.state != 'describe':
-        time.sleep(0.1)
-        print('sleep')
-print('end')
-'''
