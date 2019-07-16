@@ -56,7 +56,6 @@ class Camera():
                             transport=self.socks_transport
                             )
     def watchdog(self, observer, disposable):
-        #print("watchdog invoked")
         #TODO: add a try here and if fail pass observer error
         observer.on_next(self.ONVIF_CONNECTING)
         self.probe_information()

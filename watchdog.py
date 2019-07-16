@@ -38,11 +38,11 @@ for cam in cams:
     watchdog = rx.subject.Subject()
     
     #buffer_end = rx.(lambda observer, disposable: observer.on_next(None)).pipe(
-    buffer_signal = rx.create(lambda observable, d: watchdog.subscribe(observable)).pipe(
+    buffer_signal = rx.create(lambda observable, _: watchdog.subscribe(observable)).pipe(
         ops.filter(lambda x: x==Camera.COMPLETE_BUFFER)
     )
 
-    stream = rx.create(lambda observable, d: watchdog.subscribe(observable)).pipe(
+    stream = rx.create(lambda observable, _: watchdog.subscribe(observable)).pipe(
         ops.buffer_when(lambda: buffer_signal)
     )
 
@@ -58,16 +58,27 @@ for cam in cams:
         on_completed = lambda: print("--- end of source ---"),
     )
 
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
-    watchdog.on_next(Camera.ONVIF_HEALTHY)
-    watchdog.on_next(Camera.RTSP_UNHEALTHY)
-    watchdog.on_next(Camera.COMPLETE_BUFFER)
+    repeater = rx.interval(QUERY_INTERVAL).pipe(
+        ops.do_action(lambda x: cam.watchdog(watchdog,None))
+        #ops.do_action(lambda x: )
+    )
 
+    repeater.subscribe(
+        on_next = lambda i: None,
+        on_error = lambda e: print("Error Occurred: {0}".format(e)),
+        on_completed = lambda: print("--- end of source ---"),
+    )
+'''
+    watchdog.on_next(Camera.ONVIF_HEALTHY)
+    watchdog.on_next(Camera.RTSP_UNHEALTHY)
+    watchdog.on_next(Camera.COMPLETE_BUFFER)
+    watchdog.on_next(Camera.ONVIF_HEALTHY)
+    watchdog.on_next(Camera.RTSP_UNHEALTHY)
+    watchdog.on_next(Camera.COMPLETE_BUFFER)
+    watchdog.on_next(Camera.ONVIF_HEALTHY)
+    watchdog.on_next(Camera.RTSP_UNHEALTHY)
+    watchdog.on_next(Camera.COMPLETE_BUFFER)
+'''
 
 
 while True:
