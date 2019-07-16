@@ -9,6 +9,7 @@ from rtsp import RTSPClient
 #import socks
 import time
 import re
+import datetime
 
 
 class Profile(object):
@@ -51,7 +52,7 @@ class Camera():
     def log(self, info):
         socks_info = ''
         if self.socks_transport: socks_info = ', socks://' + self.socks_host + ":" + str(self.socks_port)
-        print('Camera ' + self.name + ', id: ' + str(self.id) + ', ' + self.ip + ':' + self.onvif + socks_info + ": " + str(info))
+        print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ', Camera ' + self.name + ', id: ' + str(self.id) + ', ' + self.ip + ':' + self.onvif + socks_info + ": " + str(info))
 
 #Just to see things
     def probe_information(self):
@@ -64,17 +65,18 @@ class Camera():
                             wsdl, 
                             transport=self.socks_transport
                             )
-        self.log('getting capabilities...')
+        #self.log('getting capabilities...')
         resp = mycam.devicemgmt.GetCapabilities()
 
         if resp["Imaging"]:
-            self.log('supports imaging services')
-            self.imaging_url = resp["Imaging"]["XAddr"]
+            #self.log('supports imaging services')
+            #self.imaging_url = resp["Imaging"]["XAddr"]
+            pass
         if resp["Media"]:
-            self.log('supports media services')
-            self.log('querying media services...')
+            #self.log('supports media services')
+            #self.log('querying media services...')
             media_service = mycam.create_media_service()
-            self.log('querying profiles...')
+            #self.log('querying profiles...')
             profiles = media_service.GetProfiles()
             for profile in profiles:
                 p = Profile()
@@ -90,7 +92,7 @@ class Camera():
                 self.profiles.append(p)
 
             for profile in self.profiles:
-                self.log('getting system uri for profile ' + profile.name + " ...")
+                #self.log('getting system uri for profile ' + profile.name + " ...")
                 params = mycam.devicemgmt.create_type('GetSystemUris')
                 resp = mycam.media.GetStreamUri({'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}}, 'ProfileToken': profile.token})
                 if resp['Uri']:
@@ -106,10 +108,10 @@ class Camera():
         a = re.findall(r'a=.+', rtsp_body)
         m_video = [i.replace('m=', '') for i in m if 'video' in i.lower()]
         m_audio = [i.replace('m=', '') for i in m if 'audio' in i.lower()]
-        print('m_video: ' + str(m_video))
-        print('m_audio: ' + str(m_audio))
-        for video in m_video:
-            print(video.split(' '))
+        #print('m_video: ' + str(m_video))
+        #print('m_audio: ' + str(m_audio))
+        #for video in m_video:
+            #print(video.split(' '))
         chosen_video = m_video[0].split(' ')
         chosen_video_port = chosen_video[1]
         chosen_video_protocol = chosen_video[2]
@@ -117,9 +119,9 @@ class Camera():
         chosen_audio = m_audio[0].split(' ')
         chosen_audio_port = chosen_audio[1]
         chosen_audio_protocol = chosen_audio[2]    
-        print('chosen_video_protocol: ' + chosen_video_protocol)
-        print('chosen_video_port: ' + chosen_video_port)
-        print('chosen_video_fmt: ' + chosen_video_fmt)
+        #print('chosen_video_protocol: ' + chosen_video_protocol)
+        #print('chosen_video_port: ' + chosen_video_port)
+        #print('chosen_video_fmt: ' + chosen_video_fmt)
         return ['rtp_avp_tcp']
         #print(re.findall(r'm=.+', rtsp_body))
         #print('decide between these: ' + rtsp_body())
@@ -129,10 +131,11 @@ class Camera():
             return uri.replace('rtsp://', 'rtsp://' + self.username + ":" + self.password + '@')
 
     def rtsp_connect(self, uri):
+        self.log('rtsp connection to uri ' + uri)
         RTSP_timeout = 10
         uri = self.rtsp_uri_ensure_username(uri)
         #uri = self.rtsp_uri#.replace('554\/11', '10554')
-        self.log('opening RTSP connection to url ' + uri + ' ...')
+        #self.log('opening RTSP connection to url ' + uri + ' ...')
         callback = lambda x: self.log('\n' + x) 
         sock = None
         if self.socks:
@@ -140,7 +143,7 @@ class Camera():
             #The true is for remote dns resolution
             sock.set_proxy(socks.SOCKS5, self.socks_host, self.socks_port, True, self.socks_user, self.socks_password) # (socks.SOCKS5, "localhost", 1234)
 
-        myrtsp = RTSPClient(url=uri, callback=callback, socks=None)#, timeout=RTSP_timeout)
+        myrtsp = RTSPClient(url=uri, callback=None, socks=None)#, timeout=RTSP_timeout)
         return myrtsp
 '''
         try:
