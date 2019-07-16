@@ -8,8 +8,6 @@ import time
 #https://github.com/runtheops/rtsp-rtp/
 #from rtspclient import RTSPClient
 
-from camera import Camera
-
 import signal,sys,time
 def signal_handling(signum,frame):           
     sys.exit()                        
@@ -18,26 +16,18 @@ signal.signal(signal.SIGINT,signal_handling)
 
 QUERY_INTERVAL = 12
 
-cams = []
-cams.append(Camera(id = '1',
-             name = 'Cam1',
-             ip = '192.168.0.103',
-             onvif = '10080',
-             #rtsp = '10554',
-             username = 'admin',
-             password = '19929394',
-             socks = None
-             ))
-
-def list_accumulator(old,new):
-    old.append(new)
-    return old 
+from cameras import cams
 
 for cam in cams:
-    #watchdog = rx.create(cam.watchdog)
+    def process_camera_condition(condition):
+        if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_HEALTHY in condition:
+            cam.log("REBOOT CAMERA THROUGH ONVIF NOW")
+            cam.devicemgmt.SystemReboot()
+        if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
+            cam.log("VERY ABNORMAL SITUATION, LOG NOW")
+
     watchdog = rx.subject.Subject()
     
-    #buffer_end = rx.(lambda observer, disposable: observer.on_next(None)).pipe(
     buffer_signal = rx.create(lambda observable, _: watchdog.subscribe(observable)).pipe(
         ops.filter(lambda x: x==Camera.COMPLETE_BUFFER)
     )
@@ -47,15 +37,15 @@ for cam in cams:
     )
 
     stream.subscribe(
-        on_next = lambda i: print(i),
-        on_error = lambda e: print("Error Occurred: {0}".format(e)),
-        on_completed = lambda: print("--- end of source ---"),
+        on_next = lambda i: process_camera_condition(i),
+        on_error = lambda e: print("Error Occurred in stream: {0}".format(e)),
+        on_completed = lambda: print("--- end of stream ---"),
     )
 
     buffer_signal.subscribe(
-        on_next = lambda i: print('//' + i),
-        on_error = lambda e: print("Error Occurred: {0}".format(e)),
-        on_completed = lambda: print("--- end of source ---"),
+        on_next = lambda i: None,
+        on_error = lambda e: print("Error Occurred in buffer_signal: {0}".format(e)),
+        on_completed = lambda: print("--- end of buffer_signal ---"),
     )
 
     repeater = rx.interval(QUERY_INTERVAL).pipe(
@@ -65,8 +55,8 @@ for cam in cams:
 
     repeater.subscribe(
         on_next = lambda i: None,
-        on_error = lambda e: print("Error Occurred: {0}".format(e)),
-        on_completed = lambda: print("--- end of source ---"),
+        on_error = lambda e: print("Error Occurred in repeater: {0}".format(e)),
+        on_completed = lambda: print("--- end of repeater ---"),
     )
 '''
     watchdog.on_next(Camera.ONVIF_HEALTHY)

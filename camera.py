@@ -97,7 +97,6 @@ class Camera():
                             )
         #self.log('getting capabilities...')
         resp = mycam.devicemgmt.GetCapabilities()
-
         if resp["Imaging"]:
             #self.log('supports imaging services')
             #self.imaging_url = resp["Imaging"]["XAddr"]
