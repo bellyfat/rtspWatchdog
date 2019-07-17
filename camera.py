@@ -12,7 +12,7 @@ from rtsp import RTSPClient
 import time
 import re
 import datetime
-
+timezone = time.timezone / 3600.0
 
 class Profile(object):
     pass
@@ -101,8 +101,7 @@ class Camera():
         resp = mycam.devicemgmt.GetCapabilities()
         if resp["Imaging"]:
             #self.log('supports imaging services')
-            #self.imaging_url = resp["Imaging"]["XAddr"]
-            pass
+            self.imaging_url = resp["Imaging"]["XAddr"]
         if resp["Media"]:
             #self.log('supports media services')
             #self.log('querying media services...')

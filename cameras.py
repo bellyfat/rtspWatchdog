@@ -5,10 +5,10 @@ cams = []
 
 cams.append(Camera(id = '1',
              name = 'Cam1',
-             ip = '192.168.0.101',
-             onvif = '10080',
+             ip = '192.168.0.122',
+             onvif = '80',
              #rtsp = '10554',
              username = 'admin',
-             password = '19929394',
+             password = 'ljspqk1.618.@',
              socks = None
              ))

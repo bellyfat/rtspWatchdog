@@ -12,9 +12,10 @@ def signal_handling(signum,frame):
 
 signal.signal(signal.SIGINT,signal_handling) 
 
-QUERY_INTERVAL = 12
+QUERY_INTERVAL = 38
 
 import datetime
+
 print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ' ----------- rtspWatchdog started')
 
 from cameras import cams, Camera
@@ -42,25 +43,24 @@ for cam in cams:
 
     stream.subscribe(
         on_next = lambda i: process_camera_condition(i),
-        on_error = lambda e: print("Error Occurred in stream: {0}".format(e)),
-        on_completed = lambda: print("--- end of stream ---"),
+        on_error = lambda e: cam.log(e),
+        on_completed = lambda: None,
     )
 
     buffer_signal.subscribe(
         on_next = lambda i: None,
-        on_error = lambda e: print("Error Occurred in buffer_signal: {0}".format(e)),
-        on_completed = lambda: print("--- end of buffer_signal ---"),
+        on_error = lambda e: cam.log(e),
+        on_completed = lambda: None,
     )
 
     repeater = rx.interval(QUERY_INTERVAL).pipe(
         ops.do_action(lambda x: cam.watchdog(watchdog,None))
-        #ops.do_action(lambda x: )
     )
 
     repeater.subscribe(
         on_next = lambda i: None,
-        on_error = lambda e: print("Error Occurred in repeater: {0}".format(e)),
-        on_completed = lambda: print("--- end of repeater ---"),
+        on_error = lambda e: cam.log(e),
+        on_completed = lambda: None,
     )
 
 
