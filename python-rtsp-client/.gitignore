@@ -1,1 +1,2 @@
 *.pyc
+__py_cache__/*

@@ -15,7 +15,7 @@ def signal_handling(signum,frame):
 
 signal.signal(signal.SIGINT,signal_handling) 
 
-QUERY_INTERVAL = 50
+QUERY_INTERVAL = 5
 
 import datetime
 print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ' ----------- rtspWatchdog started')
@@ -38,6 +38,9 @@ def process_camera_condition(cam, condition):
         cam.log("Both ONVIF and RTSP are down!")
     if cam.RTSP_HEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
         cam.log("Very strange, RTSP is ok but not ONVIF")
+    if cam.RTSP_HEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
+        #cam.log("Camera OK")
+        pass
 
 def high_order_subscribe(watchdog,observable,disposable):
     return watchdog.subscribe(observable)
@@ -68,7 +71,7 @@ for cam in cams:
     )
 
     c.stream.subscribe(
-        on_next = lambda i: partial(process_camera_condition,c.cam,i),
+        on_next = partial(process_camera_condition,c.cam),
         on_error = lambda e: c.cam.log_error(str(e) + ' --stream'),
         on_completed = lambda: None,
     )
