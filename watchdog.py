@@ -5,8 +5,11 @@
 import rx
 from rx import operators as ops
 import time
-
+from cameras import cams, Camera
+from pprint import pprint
+from functools import partial
 import signal,sys,time
+
 def signal_handling(signum,frame):           
     sys.exit()                        
 
@@ -15,13 +18,7 @@ signal.signal(signal.SIGINT,signal_handling)
 QUERY_INTERVAL = 50
 
 import datetime
-
 print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ' ----------- rtspWatchdog started')
-
-from cameras import cams, Camera
-from pprint import pprint
-from functools import partial
-
 
 cam_holder = {}
 
