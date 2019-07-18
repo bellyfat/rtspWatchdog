@@ -21,6 +21,10 @@ then leave open:
 
 `sudo docker logs --follow rtspwatchdog`
 
+To log but without observable errors:
+
+`sudo docker logs --follow rtspwatchdog | grep -v "ERROR_LOG"`
+
 Reattach to screen with `screen -r -d`
 
 # Raspberry pi
