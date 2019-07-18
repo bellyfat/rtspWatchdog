@@ -25,6 +25,7 @@ class Camera():
     RTSP_CONNECTING = 'RTSP CONNECTING'
     ONVIF_CONNECTING = 'ONVIF CONNECTING'
     COMPLETE_BUFFER = 'COMPLETE_BUFFER'
+    RTSP_TIMEOUT = 5 #Seconds
     def __init__(self, id=None, name=None, ip=None, onvif=None, rtsp=None, username=None, password=None, socks=None):
         self.id = id
         self.name = name or ''
@@ -67,29 +68,27 @@ class Camera():
         rtsp = self.rtsp_connect(uri)
         rtsp.do_describe()
         i = 0
-        #print("watchdog whle begin")
 
         while rtsp.state != 'describe':
             time.sleep(0.1)
             i+=1
-            if i==5*10:
+            if i==Camera.RTSP_TIMEOUT*10:
                 break
         if rtsp.state != 'describe':
             observer.on_next(self.RTSP_UNHEALTHY)
         else:
             observer.on_next(self.RTSP_HEALTHY)
         observer.on_next(self.COMPLETE_BUFFER)
-        #print("COMPLETE_BUFFER emitted")
 
     def log(self, info):
         socks_info = ''
         if self.socks_transport: socks_info = ', socks://' + self.socks_host + ":" + str(self.socks_port)
         print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ', Camera ' + self.name + ', id: ' + str(self.id) + ', ' + self.ip + ':' + self.onvif + socks_info + ": " + str(info))
 
-#Just to see things
-    def probe_information(self):
-        #self.log('loading information...')
-        
+    def log_error(self, info):
+        self.log('ERROR_LOG ' + str(info))
+
+    def probe_information(self):        
         mycam = ONVIFCamera(self.ip, 
                             self.onvif,
                             self.username, 
@@ -162,7 +161,7 @@ class Camera():
 
     def rtsp_connect(self, uri):
         #self.log('rtsp connection to uri ' + uri)
-        RTSP_timeout = 10
+        #RTSP_timeout = 10
         uri = self.rtsp_uri_ensure_username(uri)
         #uri = self.rtsp_uri#.replace('554\/11', '10554')
         #self.log('opening RTSP connection to url ' + uri + ' ...')
@@ -175,19 +174,3 @@ class Camera():
 
         myrtsp = RTSPClient(url=uri, callback=None, socks=None)#, timeout=RTSP_timeout)
         return myrtsp
-'''
-        try:
-            myrtsp.do_describe()
-            while myrtsp.state != 'describe':
-                time.sleep(0.1)
-            myrtsp.do_setup('track0')
-            while myrtsp.state != 'setup':
-                time.sleep(0.1)
-            #Open socket to capture frames here
-            myrtsp.do_play(myrtsp.cur_range, myrtsp.cur_scale)
-        except Exception as e:
-            print('EXCEPTION ------------------------------')
-            print(e)
-            myrtsp.do_teardown()
-        #return camera
-'''
