@@ -25,7 +25,7 @@ class Camera():
     RTSP_CONNECTING = 'RTSP CONNECTING'
     ONVIF_CONNECTING = 'ONVIF CONNECTING'
     COMPLETE_BUFFER = 'COMPLETE_BUFFER'
-    RTSP_TIMEOUT = 5 #Seconds
+    RTSP_TIMEOUT = 15 #Seconds
     def __init__(self, id=None, name=None, ip=None, onvif=None, rtsp=None, username=None, password=None, socks=None):
         self.id = id
         self.name = name or ''
@@ -51,34 +51,29 @@ class Camera():
             }
 
             self.socks_transport = CustomTransport(timeout=10, proxies=proxies)
-        self.camera = ONVIFCamera(self.ip, 
-                            self.onvif,
-                            self.username, 
-                            self.password,
-                            wsdl, 
-                            transport=self.socks_transport
-                            )
     def watchdog(self, observer, disposable):
-        #TODO: add a try here and if fail pass observer error
-        observer.on_next(self.ONVIF_CONNECTING)
-        self.probe_information()
-        observer.on_next(self.ONVIF_HEALTHY)
-        uri = self.profiles[0].rtsp_uri
-        observer.on_next(self.RTSP_CONNECTING)
-        rtsp = self.rtsp_connect(uri)
-        rtsp.do_describe()
-        i = 0
+        try:
+            observer.on_next(self.ONVIF_CONNECTING)
+            self.probe_information()
+            observer.on_next(self.ONVIF_HEALTHY)
+            uri = self.profiles[0].rtsp_uri
+            observer.on_next(self.RTSP_CONNECTING)
+            rtsp = self.rtsp_connect(uri)
+            rtsp.do_describe()
+            i = 0
 
-        while rtsp.state != 'describe':
-            time.sleep(0.1)
-            i+=1
-            if i==Camera.RTSP_TIMEOUT*10:
-                break
-        if rtsp.state != 'describe':
-            observer.on_next(self.RTSP_UNHEALTHY)
-        else:
-            observer.on_next(self.RTSP_HEALTHY)
-        observer.on_next(self.COMPLETE_BUFFER)
+            while rtsp.state != 'describe':
+                time.sleep(0.1)
+                i+=1
+                if i==Camera.RTSP_TIMEOUT*10:
+                    break
+            if rtsp.state != 'describe':
+                observer.on_next(self.RTSP_UNHEALTHY)
+            else:
+                observer.on_next(self.RTSP_HEALTHY)
+            observer.on_next(self.COMPLETE_BUFFER)
+        except Exception as e:
+            observer.on_error(str(e))
 
     def log(self, info):
         socks_info = ''

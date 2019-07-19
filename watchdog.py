@@ -15,7 +15,7 @@ def signal_handling(signum,frame):
 
 signal.signal(signal.SIGINT,signal_handling) 
 
-QUERY_INTERVAL = 5
+QUERY_INTERVAL = 55
 
 import datetime
 print(str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + ' ----------- rtspWatchdog started')
@@ -48,6 +48,10 @@ def high_order_subscribe(watchdog,observable,disposable):
 def high_order_return(o):
     return o
 
+def high_order_log(logger_function, info):
+    logger_function(info)
+    return
+
 for cam in cams:
     unique_id = str(cam.ip) + ':' + str(cam.onvif)
     cam_holder[unique_id] = Cam()
@@ -66,22 +70,23 @@ for cam in cams:
 
     c.buffer_signal.subscribe(
         on_next = lambda i: None,
-        on_error = lambda e: c.cam.log_error(str(e) + ' --buffer_signal'),
+        on_error = partial(high_order_log, cam.log_error),
         on_completed = lambda: None,
     )
 
     c.stream.subscribe(
         on_next = partial(process_camera_condition,c.cam),
-        on_error = lambda e: c.cam.log_error(str(e) + ' --stream'),
+        on_error = partial(high_order_log, cam.log_error),
         on_completed = lambda: None,
     )
 
     c.repeater = rx.interval(QUERY_INTERVAL).pipe(
         ops.do_action(partial(c.cam.watchdog,c.watchdog))
     )
+
     c.repeater.subscribe(
         on_next = lambda i: None,
-        on_error = lambda e: c.cam.log_error(str(e) + ' --repeater'),
+        on_error = partial(high_order_log, cam.log_error),
         on_completed = lambda: None,
     )
 
