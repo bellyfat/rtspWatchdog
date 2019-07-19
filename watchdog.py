@@ -32,8 +32,8 @@ class Cam():
 def process_camera_condition(cam, condition):
     if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_HEALTHY in condition:
         cam.log("REBOOTING!")
-        cam.camera.create_devicemgmt_service()
-        cam.camera.devicemgmt.SystemReboot()
+        cam.create_devicemgmt_service()
+        cam.devicemgmt.SystemReboot()
     if cam.RTSP_UNHEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
         cam.log("Both ONVIF and RTSP are down!")
     if cam.RTSP_HEALTHY in condition and cam.ONVIF_UNHEALTHY in condition:
