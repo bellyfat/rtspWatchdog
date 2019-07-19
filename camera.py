@@ -51,6 +51,7 @@ class Camera():
             }
 
             self.socks_transport = CustomTransport(timeout=10, proxies=proxies)
+        self.camera = None
     def watchdog(self, observer, disposable):
         try:
             observer.on_next(self.ONVIF_CONNECTING)
@@ -84,7 +85,7 @@ class Camera():
         self.log('ERROR_LOG ' + str(info))
 
     def probe_information(self):        
-        mycam = ONVIFCamera(self.ip, 
+        self.camera = ONVIFCamera(self.ip, 
                             self.onvif,
                             self.username, 
                             self.password,
