@@ -19,11 +19,11 @@ Tip: follow the log on a screen:
 
 then leave open:
 
-`sudo docker logs --follow rtspwatchdog`
+`sudo docker logs --tail 500 --follow rtspwatchdog`
 
 To log but without observable errors:
 
-`sudo docker logs --follow rtspwatchdog | grep -v "ERROR_LOG"`
+`sudo docker logs --tail 500 --follow rtspwatchdog | grep -v "ERROR_LOG"`
 
 Reattach to screen with `screen -r -d`
 

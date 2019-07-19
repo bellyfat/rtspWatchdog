@@ -93,14 +93,14 @@ class Camera():
                             transport=self.socks_transport
                             )
         #self.log('getting capabilities...')
-        resp = mycam.devicemgmt.GetCapabilities()
+        resp = self.camera.devicemgmt.GetCapabilities()
         if resp["Imaging"]:
             #self.log('supports imaging services')
             self.imaging_url = resp["Imaging"]["XAddr"]
         if resp["Media"]:
             #self.log('supports media services')
             #self.log('querying media services...')
-            media_service = mycam.create_media_service()
+            media_service = self.camera.create_media_service()
             #self.log('querying profiles...')
             profiles = media_service.GetProfiles()
             for profile in profiles:
@@ -118,8 +118,8 @@ class Camera():
 
             for profile in self.profiles:
                 #self.log('getting system uri for profile ' + profile.name + " ...")
-                params = mycam.devicemgmt.create_type('GetSystemUris')
-                resp = mycam.media.GetStreamUri({'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}}, 'ProfileToken': profile.token})
+                params = self.camera.devicemgmt.create_type('GetSystemUris')
+                resp = self.camera.media.GetStreamUri({'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}}, 'ProfileToken': profile.token})
                 if resp['Uri']:
                     profile.rtsp_uri = resp['Uri']
                     profile.InvalidAfterConnect = resp['InvalidAfterConnect']
